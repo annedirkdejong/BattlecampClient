@@ -1,5 +1,6 @@
 package battlecamp.client.model;
 
+import battlecamp.client.QFiles.State;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.List;
@@ -63,6 +64,16 @@ public class Game {
 
     public void setPlayers(List<Player> players) {
         this.players = players;
+    }
+
+    public State getState(){
+        return new State(this.players);
+    }
+
+    public void updatePlayerPos(String id, int x, int y){
+        Player player = getPlayers().stream().filter(p -> p.getId().equals(id)).findFirst().get();
+        player.setX(x);
+        player.setY(y);
     }
 
     @Override

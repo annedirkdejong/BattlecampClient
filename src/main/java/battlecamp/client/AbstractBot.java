@@ -1,9 +1,6 @@
 package battlecamp.client;
 
-import battlecamp.client.model.Beurt;
-import battlecamp.client.model.Direction;
-import battlecamp.client.model.Game;
-import battlecamp.client.model.Update;
+import battlecamp.client.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -31,8 +28,8 @@ public abstract class AbstractBot {
     private Set<Game> joinedGames = new HashSet<>();
     private Object lock = new Object();
 
-    @Value("${bot.name}")
-    private String botName;
+     //   @Value("${bot.name}")
+    private String botName = "Bot" + System.currentTimeMillis();
 
     @Value("${bot.type}")
     private String botType;
@@ -80,8 +77,8 @@ public abstract class AbstractBot {
     public final void receiveBeurtUpdates(TextMessage message) {
         Beurt beurt = mapMessage(message, Beurt.class);
         if (beurt != null && !joinedGames.isEmpty() && beurt.getPlayer().getId().equals(getBotName())) {
-            System.out.println("Aan de beurt: " + beurt.getGameId());
-            beurt(beurt.getGameId());
+            //System.out.println("Aan de beurt: " + beurt.getGameId());
+            beurt(beurt.getGameId(), beurt.getPlayer());
         }
     }
 
@@ -105,7 +102,7 @@ public abstract class AbstractBot {
 
     public abstract void gameUpdate(Update update);
 
-    public abstract void beurt(String gameId);
+    public abstract void beurt(String gameId, Player player);
 
     private boolean joinGame(Game game) {
         String botName = getBotName();

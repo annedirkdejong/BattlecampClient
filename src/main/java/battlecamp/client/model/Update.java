@@ -44,4 +44,14 @@ public class Update {
     public void setPlayer(Player player) {
         this.player = player;
     }
+
+    @Override
+    public String toString() {
+        return "Update{" +
+                "x=" + x +
+                ", y=" + y +
+                ", type=" + type +
+                ", player=" + player +
+                '}';
+    }
 }

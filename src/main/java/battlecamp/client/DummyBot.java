@@ -12,7 +12,7 @@ import java.util.*;
 /**
  * Created by martin on 11.05.17.
  */
-@Component
+//@Component
 public class DummyBot extends AbstractBot {
 
     private Map<Tile, Tile> tiles = new HashMap<>();
@@ -86,11 +86,10 @@ public class DummyBot extends AbstractBot {
 
     @Override
     public void gameUpdate(Update update) {
-
     }
 
     @Override
-    public void beurt(String gameId) {
+    public void beurt(String gameId, Player player) {
         if (!directions.isEmpty()) {
             action(gameId, directions.remove(0));
         }
