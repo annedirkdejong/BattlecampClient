@@ -25,24 +25,42 @@ public class State {
 
     }
 
+    public List<String> getTypes() {
+        return types;
+    }
+
+    public void setTypes(List<String> types) {
+        this.types = types;
+    }
+
+    public List<Point> getCoords() {
+        return coords;
+    }
+
+    public void setCoords(List<Point> coords) {
+        this.coords = coords;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         State state = (State) o;
-        if(Objects.equals(types, state.types) &&
-                Objects.equals(coords, state.coords)) {
-            //System.out.println("FOUND A COUPLE");
-            //System.out.println("States: " + this.types + " - " + state.types);
-            //System.out.println("States: " + this.coords + " - " + state.coords);
-        }
-        return Objects.equals(types, state.types) &&
-                Objects.equals(coords, state.coords);
+        return types.equals(state.getTypes()) &&
+                coords.equals(state.getCoords());
     }
 
     @Override
     public int hashCode() {
 
         return Objects.hash(types, coords);
+    }
+
+    @Override
+    public String toString() {
+        return "State{" +
+                "types=" + types +
+                ", coords=" + coords +
+                '}';
     }
 }

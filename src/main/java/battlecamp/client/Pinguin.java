@@ -1,5 +1,6 @@
 package battlecamp.client;
 
+import battlecamp.client.GUI.SettingsGUI;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jms.DefaultJmsListenerContainerFactoryConfigurer;

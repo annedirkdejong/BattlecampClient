@@ -70,10 +70,13 @@ public class Game {
         return new State(this.players);
     }
 
-    public void updatePlayerPos(String id, int x, int y){
-        Player player = getPlayers().stream().filter(p -> p.getId().equals(id)).findFirst().get();
-        player.setX(x);
-        player.setY(y);
+    public void updatePlayer(Player tmpPlayer){
+        if(!this.players.stream().filter(o -> o.getId().equals(tmpPlayer.getId())).findFirst().isPresent())
+            this.players.add(tmpPlayer);
+        Player player = getPlayers().stream().filter(p -> p.getId().equals(tmpPlayer.getId())).findFirst().get();
+        player.setX(tmpPlayer.getX());
+        player.setY(tmpPlayer.getY());
+        player.setHeeftBeurt(tmpPlayer.isHeeftBeurt());
     }
 
     @Override

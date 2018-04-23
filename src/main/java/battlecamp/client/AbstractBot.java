@@ -49,16 +49,16 @@ public abstract class AbstractBot {
     @JmsListener(destination = "games", containerFactory = "myFactory")
     public final void receiveGameUpdates(TextMessage message) {
         Game game = mapMessage(message, Game.class);
-        System.out.println("Game update: " + game);
+        //System.out.println("Game update: " + game);
         if (game != null) {
             synchronized (lock) {
                 if (!pendingJoins.contains(game) && !joinedGames.contains(game) && joinGame(game)) {
-                    System.out.println("Joining Game with id: " + game.getId());
+                    //System.out.println("Joining Game with id: " + game.getId());
                     pendingJoins.add(game);
                 } else if (!joinedGames.contains(game) && pendingJoins.contains(game) && game.getPlayers().stream().anyMatch(p -> p.getId().equals(getBotName()))) {
                     joinedGames.add(game);
                     pendingJoins.remove(game);
-                    System.out.println("Joined Game with id: " + game.getId());
+                    //System.out.println("Joined Game with id: " + game.getId());
                     enterGame(game);
                 }
             }
@@ -78,7 +78,7 @@ public abstract class AbstractBot {
         Beurt beurt = mapMessage(message, Beurt.class);
         if (beurt != null && !joinedGames.isEmpty() && beurt.getPlayer().getId().equals(getBotName())) {
             //System.out.println("Aan de beurt: " + beurt.getGameId());
-            beurt(beurt.getGameId(), beurt.getPlayer());
+            beurt(beurt.getGameId(), beurt.getPlayer(), beurt.getPlayers());
         }
     }
 
@@ -102,7 +102,7 @@ public abstract class AbstractBot {
 
     public abstract void gameUpdate(Update update);
 
-    public abstract void beurt(String gameId, Player player);
+    public abstract void beurt(String gameId, Player player, List<Player> players);
 
     private boolean joinGame(Game game) {
         String botName = getBotName();

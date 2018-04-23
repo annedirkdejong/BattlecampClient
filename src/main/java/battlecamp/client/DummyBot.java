@@ -89,7 +89,7 @@ public class DummyBot extends AbstractBot {
     }
 
     @Override
-    public void beurt(String gameId, Player player) {
+    public void beurt(String gameId, Player player, List<Player> players) {
         if (!directions.isEmpty()) {
             action(gameId, directions.remove(0));
         }

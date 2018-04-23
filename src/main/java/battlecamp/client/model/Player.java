@@ -10,6 +10,8 @@ public class Player {
 
     private String id;
     private String type;
+    private boolean winner;
+    private boolean dead;
     private boolean heeftBeurt;
     private int x;
     private int y;
@@ -29,6 +31,16 @@ public class Player {
     public void setType(String type) {
         this.type = type;
     }
+
+    public boolean isWinner() { return winner; }
+
+    public void setWinner(boolean val) {
+        this.winner = val;
+    }
+
+    public boolean isDead() { return dead; }
+
+    public void setDead(boolean val) { this.dead = val; }
 
     public boolean isHeeftBeurt() {
         return heeftBeurt;
@@ -60,6 +72,7 @@ public class Player {
                 "id='" + id + '\'' +
                 ", x=" + x +
                 ", y=" + y +
+                ", beurt=" + heeftBeurt +
                 '}';
     }
 }
