@@ -1,9 +1,9 @@
 package battlecamp.client;
 
-import battlecamp.client.GUI.SettingsGUI;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jms.DefaultJmsListenerContainerFactoryConfigurer;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jms.annotation.EnableJms;
@@ -44,7 +44,8 @@ public class Pinguin {
 
     public static void main(String[] args) {
         // Launch the application
-        ConfigurableApplicationContext context = SpringApplication.run(Pinguin.class, args);
+        //ConfigurableApplicationContext context = SpringApplication.run(Pinguin.class, args);
+        new SpringApplicationBuilder(Pinguin.class).headless(false).web(false).run(args);
     }
 
 }

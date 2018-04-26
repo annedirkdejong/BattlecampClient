@@ -2,6 +2,7 @@ package battlecamp.client.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -37,4 +38,14 @@ public class Board {
     public void setTiles(List<Tile> tiles) {
         this.tiles = tiles;
     }
+
+    // ----- TEMP -----
+    public Board copy(){
+        Board b = new Board();
+        b.setRows(rows);
+        b.setColumns(columns);
+        b.setTiles(tiles);
+        return b;
+    }
+
 }

@@ -25,6 +25,15 @@ public class State {
 
     }
 
+    public State(){}
+
+    public State copy(){
+        State s = new State();
+        s.setCoords(new ArrayList<Point>(this.getCoords()));
+        s.setTypes(new ArrayList<String>(this.getTypes()));
+        return s;
+}
+
     public List<String> getTypes() {
         return types;
     }

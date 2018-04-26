@@ -28,7 +28,7 @@ public abstract class AbstractBot {
     private Set<Game> joinedGames = new HashSet<>();
     private Object lock = new Object();
 
-     //   @Value("${bot.name}")
+    //   @Value("${bot.name}")
     private String botName = "Bot" + System.currentTimeMillis();
 
     @Value("${bot.type}")

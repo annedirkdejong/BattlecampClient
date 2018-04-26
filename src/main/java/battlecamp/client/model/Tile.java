@@ -64,4 +64,13 @@ public class Tile {
         result = 31 * result + y;
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "Tile{" +
+                "x=" + x +
+                ", y=" + y +
+                ", type=" + type +
+                '}';
+    }
 }

@@ -1,10 +1,13 @@
 package battlecamp.client;
 
+import battlecamp.client.GUI.SettingsGUI;
 import battlecamp.client.model.*;
 import battlecamp.client.QFiles.*;
 import org.springframework.stereotype.Component;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * Created by Anne-dirk on 09.04.18.
@@ -12,77 +15,81 @@ import java.util.*;
 @Component
 public class QBot extends AbstractBot {
 
-    private Object lock = new Object();
+    private final boolean useGUI = true;
 
     private final float Reward = -1.0f;
     private final float Alpha = 0.5f;
     private final float Gamma = 0.9f;
-    private final float Epsilon = 0.09f;
+    private final float Epsilon = 0.3f;
 
 
     private Game currentGame;
     private Map<StateActionPair, Float> QFunction;
 
-    private boolean running = false;
+    private boolean doneTraining = false;
+    private boolean lock = false;
     private StateActionPair previousStateActionPair;
 
+    SettingsGUI gui = new SettingsGUI();
+
+    long totalMs = 0;
+    int gameNr = 0;
 
 
     @Override
     public void enterGame(Game game) {
-        this.previousStateActionPair = null;
 
-        if(this.QFunction == null) {
-            this.QFunction = new HashMap<>();
+        if(!this.lock) {
+            try {
+                // Re-initialize variables for a new game
+                this.lock = true;
+                this.previousStateActionPair = null;
+                this.QFunction = new HashMap<>();
+                this.currentGame = game;
+
+                // Create GUI according to the new board
+                if(useGUI)
+                    gui.setBoard(game.getBoard().copy());
+
+                // Start training
+                long start_time = System.currentTimeMillis();
+                int epochs = 100;
+                for (int epoch = 0; epoch < epochs; epoch++) {
+                    this.simulateEpisode();
+                }
+                long timeElapsed = System.currentTimeMillis() - start_time;
+                System.out.println("Done training in " + timeElapsed + "ms (" + epochs + " epochs)");
+
+                totalMs += timeElapsed;
+                System.out.println("New average " + ++gameNr + ": " + totalMs / gameNr + "ms");
+
+            }
+            catch(Exception e){
+                System.out.println("ERROR: Exception was thrown while training the QFunction");
+            }
+            finally {
+                this.lock = false;
+                this.doneTraining = true;
+            }
         }
-        this.currentGame = game;
-        this.running = true;
-
     }
 
     @Override
     public void gameUpdate(Update update) {
-        if(update.getPlayer() != null && this.previousStateActionPair != null) {
 
-            synchronized (lock) {
-
-                if (update.getPlayer().isWinner()) {
-                    float q = this.QFunction.getOrDefault(this.previousStateActionPair, 0.0f);
-                    System.out.println(this.previousStateActionPair);
-                    System.out.print("Last q-value: " + q);
-                    this.updateQ(q, 0, 1);
-                    System.out.println(", new q-value: " + this.QFunction.get(this.previousStateActionPair));
-                    this.running = false;
-                } else if (update.getPlayer().isDead()) {
-                    float q = this.QFunction.getOrDefault(this.previousStateActionPair, 0.0f);
-                    int bestAction = getBestAction(this.currentGame.getState());
-                    float maxQ = this.QFunction.getOrDefault(new StateActionPair(this.currentGame.getState(), bestAction), 0.0f);
-                    this.updateQ(q, maxQ, -1);
-                    this.running = false;
-                }
-            }
-        }
     }
 
     @Override
     public void beurt(String gameId, Player player, List<Player> players) {
 
+        // Update player locations
         for(Player p : players)
             this.currentGame.updatePlayer(p);
-        synchronized (lock) {
-            // Select best action
+
+
+        if(this.doneTraining) {
+            // Execute best action based on QFunction
             int action = getBestAction(this.currentGame.getState());
-            // Observe result from previous action & update QFunction
-            if (this.previousStateActionPair != null) {
-                float q = this.QFunction.getOrDefault(this.previousStateActionPair, 0.0f);
-                float maxQ = this.QFunction.getOrDefault(new StateActionPair(this.currentGame.getState(), action), 0.0f);
-                updateQ(q, maxQ, 0);
-            }
-            action = determineAction(action);
-            // Save state and action
-            this.previousStateActionPair = new StateActionPair(this.currentGame.getState(), action);
-            // Take action e-greedy
-            //action = determineAction(action);
             switch (action) {
                 case 0:
                     action(gameId, Direction.N);
@@ -100,24 +107,60 @@ public class QBot extends AbstractBot {
         }
     }
 
-    private void updateQ(float newQ, float maxQ, float reward){
-        this.QFunction.put(
-                this.previousStateActionPair, newQ + this.Alpha * (reward + this.Gamma * maxQ - newQ)
-        );
+    private void simulateEpisode(){
+        // Initialize
+        Board board = this.currentGame.getBoard().copy();
+        State currentState = this.currentGame.getState().copy();
+        float reward = 0.0f;
+        int step = 0;
+
+        // Play the board until the iglo is found or if the maximum number of moves has been reached (penguin might be stuck)
+        int maxMoves = board.getRows() * board.getColumns() * 4;
+        while(reward == 0.0f && step < maxMoves) {
+            // Select best action based on current QFunction
+            int action = determineAction(getBestAction(this.currentGame.getState()));
+            // Find next State when executing action
+            State nextState = getNextState(board, currentState, action);
+            // Determine reward for landing in that state
+            reward = getNextReward(board, nextState);
+            // Update Q-function accordingly
+            updateQFunction(currentState, action, nextState, reward);
+            currentState = nextState;
+            step++;
+        }
+
     }
 
+    private void updateQFunction(State currentState, int action, State nextState, float reward){
+        // Update QFunction
+        StateActionPair currentPair = new StateActionPair(currentState, action);
+        this.QFunction.put(
+                currentPair,
+                this.QFunction.getOrDefault(currentPair, 0.0f)
+                        + this.Alpha * (reward + this.Gamma
+                        * this.QFunction.getOrDefault(new StateActionPair(nextState, getBestAction(nextState)), 0.0f)
+                        - this.QFunction.getOrDefault(currentPair, 0.0f))
+        );
+        // Update GUI
+        if(useGUI)
+            this.gui.updateState(   currentState.getCoords().get(0).x, currentState.getCoords().get(0).y, this.QFunction.getOrDefault(new StateActionPair(currentState, getBestAction(currentState)), 0.0f));
+    }
+
+
     private int getBestAction(State s){
+        List<Integer> actions = new LinkedList<>(Arrays.asList(0,1,2,3));
+        Collections.shuffle(actions);
+
         float highest = -Float.MAX_VALUE;
         int bestAction = -1;
-        for(int action = 0; action < 4; action++){
-            float value = this.QFunction.getOrDefault(new StateActionPair(s,action),0.0f);
-            //System.out.println("Action value: " + value);
+        for(int i = 0; i < 4; i++){
+            float value = this.QFunction.getOrDefault(new StateActionPair(s,actions.get(i)),0.0f);
             if(value > highest){
                 highest = value;
-                bestAction = action;
+                bestAction = i;
             }
         }
-        return  bestAction;
+        return  actions.get(bestAction);
     }
 
     private int determineAction(int bestAction){
@@ -136,4 +179,58 @@ public class QBot extends AbstractBot {
         return actions.get(2);
 
     }
+
+    private float getNextReward(Board board, State state){
+        int x = state.getCoords().get(0).x;
+        int y = state.getCoords().get(0).y;
+        Tile t = findTile(board, x, y);
+        if(t.getType() == Tile.Type.HUIS) {
+            return 1.0f;
+        }
+        else
+            return 0;
+    }
+
+    private State getNextState(Board board, State currentState, int currentAction){
+        int nextX = currentState.getCoords().get(0).x;
+        int nextY = currentState.getCoords().get(0).y;
+        switch (currentAction) {
+            case 0: {
+                nextY--;
+                break;
+            }
+            case 1: {
+                nextX++;
+                break;
+            }
+            case 2: {
+                nextY++;
+                break;
+            }
+            case 3: {
+                nextX--;
+                break;
+            }
+        }
+        Tile nextTile = findTile(board, nextX, nextY);
+        if(nextTile == null || nextTile.getType() == Tile.Type.ROTS)
+            return currentState;
+        else{
+            State s = currentState.copy();
+            List<Point> coords = new ArrayList<>();
+            coords.add(new Point(nextX, nextY));
+            s.setCoords(coords);
+            return s;
+        }
+    }
+
+    private Tile findTile(Board board, int x, int y) {
+        for (Tile tile : board.getTiles()) {
+            if (tile.getX() == x && tile.getY() == y) {
+                return tile;
+            }
+        }
+        return null;
+    }
+
 }
